@@ -122,7 +122,9 @@ class BPOfferService {
         "Must pass at least one NN.");
     this.dn = dn;
 
+    //// 多个 NameNode
     for (InetSocketAddress addr : nnAddrs) {
+      //// 一个 NameNode 对应 一个 BPServiceActor
       this.bpServices.add(new BPServiceActor(addr, this));
     }
   }

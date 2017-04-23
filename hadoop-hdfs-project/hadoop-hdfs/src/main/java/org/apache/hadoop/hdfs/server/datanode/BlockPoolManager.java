@@ -200,11 +200,13 @@ class BlockPoolManager {
         for (String nsToAdd : toAdd) {
           ArrayList<InetSocketAddress> addrs =
             Lists.newArrayList(addrMap.get(nsToAdd).values());
+          //// 一个 NameService 对应 一个 BPOfferService
           BPOfferService bpos = createBPOS(addrs);
           bpByNameserviceId.put(nsToAdd, bpos);
           offerServices.add(bpos);
         }
       }
+      //// 启动所有 BPOfferService
       startAll();
     }
 

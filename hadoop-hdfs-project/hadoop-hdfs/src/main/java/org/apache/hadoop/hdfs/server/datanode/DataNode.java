@@ -1104,7 +1104,15 @@ public class DataNode extends ReconfigurableBase
     
     // global DN settings
     registerMXBean();
+
+    ////////////////////////////////////////
+    //// 初始化 DataXceiverServer
+    ////////////////////////////////////////
     initDataXceiver(conf);
+
+    ////////////////////////////////////////
+    //// 启动 DatanodeHttpServer
+    ////////////////////////////////////////
     startInfoServer(conf);
     pauseMonitor = new JvmPauseMonitor(conf);
     pauseMonitor.start();
@@ -1116,12 +1124,19 @@ public class DataNode extends ReconfigurableBase
     dnUserName = UserGroupInformation.getCurrentUser().getShortUserName();
     LOG.info("dnUserName = " + dnUserName);
     LOG.info("supergroup = " + supergroup);
+
+    ////////////////////////////////////////
+    //// 初始化 RPC.Server
+    ////////////////////////////////////////
     initIpcServer(conf);
 
     metrics = DataNodeMetrics.create(conf, getDisplayName());
     metrics.getJvmMetrics().setPauseMonitor(pauseMonitor);
     
     blockPoolManager = new BlockPoolManager(this);
+    ////////////////////////////////////////
+    //// 启动 BPOfferServices
+    ////////////////////////////////////////
     blockPoolManager.refreshNamenodes(conf);
 
     // Create the ReadaheadPool from the DataNode context so we can

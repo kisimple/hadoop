@@ -670,6 +670,9 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     FSImage fsImage = new FSImage(conf,
         FSNamesystem.getNamespaceDirs(conf),
         FSNamesystem.getNamespaceEditsDirs(conf));
+    //////////////////////////////
+    //// 1. new FSNamesystem
+    //////////////////////////////
     FSNamesystem namesystem = new FSNamesystem(conf, fsImage, false);
     StartupOption startOpt = NameNode.getStartupOption(conf);
     if (startOpt == StartupOption.RECOVER) {
@@ -677,6 +680,9 @@ public class FSNamesystem implements Namesystem, FSNamesystemMBean,
     }
 
     long loadStart = monotonicNow();
+    //////////////////////////////
+    //// 2. 加载 FSImage
+    //////////////////////////////
     try {
       namesystem.loadFSImage(startOpt);
     } catch (IOException ioe) {

@@ -634,6 +634,9 @@ public class NameNode implements NameNodeStatusMXBean {
     NameNode.initMetrics(conf, this.getRole());
     StartupProgressMetrics.register(startupProgress);
 
+    ////////////////////////////////////////
+    //// 1. 启动 NameNodeHttpServer
+    ////////////////////////////////////////
     if (NamenodeRole.NAMENODE == role) {
       startHttpServer(conf);
     }
@@ -641,8 +644,14 @@ public class NameNode implements NameNodeStatusMXBean {
     this.spanReceiverHost =
       SpanReceiverHost.get(conf, DFSConfigKeys.DFS_SERVER_HTRACE_PREFIX);
 
+    ////////////////////////////////////////
+    //// 2. 加载 FSNamesystem
+    ////////////////////////////////////////
     loadNamesystem(conf);
 
+    ////////////////////////////////////////
+    //// 3. 创建 NameNodeRpcServer
+    ////////////////////////////////////////
     rpcServer = createRpcServer(conf);
     if (clientNamenodeAddress == null) {
       // This is expected for MiniDFSCluster. Set it now using 
@@ -660,7 +669,10 @@ public class NameNode implements NameNodeStatusMXBean {
     pauseMonitor = new JvmPauseMonitor(conf);
     pauseMonitor.start();
     metrics.getJvmMetrics().setPauseMonitor(pauseMonitor);
-    
+
+    ////////////////////////////////////////
+    //// 4. 启动 Common Services
+    ////////////////////////////////////////
     startCommonServices(conf);
   }
   

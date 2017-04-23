@@ -213,15 +213,18 @@ class BPServiceActor implements Runnable {
     // get NN proxy
     bpNamenode = dn.connectToNN(nnAddr);
 
+    //// 1. 调用 DatanodeProtocol#versionRequest
     // First phase of the handshake with NN - get the namespace
     // info.
     NamespaceInfo nsInfo = retrieveNamespaceInfo();
-    
+
+    //// 2. 调用 DataNode#initBlockPool
     // Verify that this matches the other NN in this HA pair.
     // This also initializes our block pool in the DN if we are
     // the first NN connection for this BP.
     bpos.verifyAndSetNamespaceInfo(nsInfo);
-    
+
+    //// 3. 调用 DatanodeProtocol#registerDatanode
     // Second phase of the handshake with the NN.
     register(nsInfo);
   }
@@ -650,6 +653,10 @@ class BPServiceActor implements Runnable {
           // -- Bytes remaining
           //
           if (!dn.areHeartbeatsDisabledForTests()) {
+            ////////////////////////////////////////////////////////////
+            //// 1. 调用 DatanodeProtocol#sendHeartbeat
+            ////    更新 NameNode HA 状态并处理返回的 DatanodeCommand
+            ////////////////////////////////////////////////////////////
             HeartbeatResponse resp = sendHeartBeat();
             assert resp != null;
             dn.getMetrics().addHeartbeat(scheduler.monotonicNow() - startTime);
@@ -679,15 +686,28 @@ class BPServiceActor implements Runnable {
             }
           }
         }
+
+        ////////////////////////////////////////////////////////////
+        //// 2. 调用 DatanodeProtocol#blockReceivedAndDeleted
+        ////    发送 IncrementalBlockReport
+        ////////////////////////////////////////////////////////////
         if (sendImmediateIBR ||
             (startTime - lastDeletedReport > dnConf.deleteReportInterval)) {
           reportReceivedDeletedBlocks();
           lastDeletedReport = startTime;
         }
 
+        ////////////////////////////////////////////////////////////
+        //// 3. 调用 DatanodeProtocol#blockReport
+        ////    并处理返回的 DatanodeCommand
+        ////////////////////////////////////////////////////////////
         List<DatanodeCommand> cmds = blockReport();
         processCommand(cmds == null ? null : cmds.toArray(new DatanodeCommand[cmds.size()]));
 
+        ////////////////////////////////////////////////////////////
+        //// 4. 调用 DatanodeProtocol#cacheReport
+        ////    并处理返回的 DatanodeCommand
+        ////////////////////////////////////////////////////////////
         DatanodeCommand cmd = cacheReport();
         processCommand(new DatanodeCommand[]{ cmd });
 
@@ -724,6 +744,10 @@ class BPServiceActor implements Runnable {
       } catch (IOException e) {
         LOG.warn("IOException in offerService", e);
       }
+
+      //////////////////////////////////////////////////
+      //// 5. 处理 BPServiceActorAction
+      //////////////////////////////////////////////////
       processQueueMessages();
     } // while (shouldRun())
   } // offerService
@@ -795,6 +819,9 @@ class BPServiceActor implements Runnable {
     LOG.info(this + " starting to offer service");
 
     try {
+      ////////////////////////////////////////
+      //// 1. connectToNNAndHandshake
+      ////////////////////////////////////////
       while (true) {
         // init stuff
         try {
@@ -819,6 +846,9 @@ class BPServiceActor implements Runnable {
 
       runningState = RunningState.RUNNING;
 
+      ////////////////////////////////////////
+      //// 2. offerService
+      ////////////////////////////////////////
       while (shouldRun()) {
         try {
           offerService();
